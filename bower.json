@@ -1,0 +1,12 @@
+{
+  "name": "replicator-PIDController",
+  "version": "0.1.0",
+  "description": "Basic PID Controller",
+  "homepage": "",
+  "authors": [
+    "Alexander Agudelo"
+  ],
+  "main": "main.js",
+  "keywords": [],
+  "license": "MIT"
+}
