@@ -1,7 +1,19 @@
+// ************************************************************************************************************
+// Written by Alexander Agudelo <alex.agudelo@asurantech.com>, 2016
+// Date: 30/Dec/2016
+// Description: Basic PID Controller
+//
+// ------
+// Copyright (C) Asuran Technologies - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly prohibited
+// Proprietary and confidential.
+// ************************************************************************************************************
+
 define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel, easy) {
-  var actions = ["ACTION1", "ACTION2"];
+  var actions = ["Output"];
   var inputs = [];
   var _objects = {};
+
   var PIDController = {
     settings:{
       Custom: {}
@@ -24,7 +36,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * By default it will show() the DataFeed, change it to true due to hide it. 
    */
   PIDController.hideDataFeed = function() {
-    return false;
+    return true;
   };
 
   /**
@@ -35,7 +47,25 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * does not refer to this module, for that use 'PIDController'
    */
   PIDController.onLoad = function(){
+    this._settingsSet = false;
+    var that = this;
+    
+    // Load my properties template
+    this.loadTemplate('properties.html').then(function(template){
+      that.propTemplate = template;
+    });
 
+     // Load previously stored settings
+    if(this.storedSettings && this.storedSettings.gainValues){
+      this.gainValues = this.storedSettings.gainValues;
+    }else{
+      // Stores the list of codes
+      this.gainValues = {
+        Kp: 1,
+        Ki: 1,
+        Kd: 1  
+      };
+    }
   };
 
   /**
@@ -45,33 +75,53 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    */
   PIDController.hasMissingProperties = function() {
     // Define a logic you want to return true and open the properties window
-    return false;
-  };
-
-
-  /**
-   * Allows blocks controllers to change the content
-   * inside the Logic Maker container
-   */
-  PIDController.lmContentOverride = function(){
-    // Use this to inject your custom HTML into the Logic Maker screen.
-    return "<div> PIDController html </div>";
+    return this._settingsSet;
   };
 
   /**
    * Parent is asking me to execute my logic.
    * This block only initiate processing with
    * actions from the hardware.
+   * @param event is an object that contains action and data properties.
    */
-  PIDController.onExecute = function() {
-
+  PIDController.onExecute = function(event) {
 
   };
 
-  // TODO: Move this to the block controller
-  function save() {
+  /**
+   * This method is called when the user hits the "Save"
+   * recipe button. Any object you return will be stored
+   * in the recipe and can be retrieved during startup (@onLoad) time.
+   */
+  PIDController.onBeforeSave = function(){
+    return {gainValues: this.gainValues};
+  };
 
-  }
+  /**
+   * Intercepts the properties panel closing action.
+   * Return "false" to abort the action.
+   * NOTE: Settings Load/Saving will atomatically
+   * stop re-trying if the event propagates.
+   */
+  PIDController.onCancelProperties = function(){
+    console.log("Cancelling Properties");
+  };
+
+  /**
+   * Intercepts the properties panel save action.
+   * You must call the save method directly for the
+   * new values to be sent to hardware blocks.
+   * @param settings is an object with the values
+   * of the elements rendered in the interface.
+   * NOTE: For the settings object to contain anything
+   * you MUST have rendered the panel using standard
+   * ways (easy.showBaseSettings and easy.renderCustomSettings)
+   */
+  PIDController.onSaveProperties = function(settings){
+    console.log("Saving: ", settings);
+    this.settings = settings;
+    // TODO: Store settings
+  };
 
   /**
    * Triggered when the user clicks on a block.
@@ -82,28 +132,19 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * use PIDController or this.controller
    */
   PIDController.onClick = function(){
+    var that = this;
+    easy.clearCustomSettingsPanel();
 
+    // Compile template using current list
+    this.myPropertiesWindow = $(this.propTemplate({values: this.gainValues}));
+    // Display elements
+    easy.displayCustomSettings(this.myPropertiesWindow);
   };
 
   /**
    * Parent is send new data (using outputs).
    */
   PIDController.onNewData = function() {};
-
-  // Returns the current value of my inputs
-  // PIDController.onRead = function(){};
-
-  // Optional event handlers
-  PIDController.onMouseOver = function(){
-    // console.log("Mouse Over on ", myself.canvasIcon.id, evt);
-  };
-
-  /**
-   * A copy has been dropped on the canvas.
-   * I need to keep a copy of the processor to be triggered when
-   * new data arrives.
-   */
-  PIDController.onAddedtoCanvas = function(){};
 
   return PIDController;
 });
