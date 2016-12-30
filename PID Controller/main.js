@@ -10,8 +10,8 @@
 // ************************************************************************************************************
 
 define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel, easy) {
-  var actions = ["Output"];
-  var inputs = [];
+  var actions = ["Update"];
+  var inputs = ["Output"];
   var _objects = {};
 
   var PIDController = {
@@ -55,6 +55,15 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
       that.propTemplate = template;
     });
 
+
+    // Load Dependencies
+    var libPath = this.basePath + 'libs/node-pid-controller/';
+    require([libPath+'lib/index.js'], function(){
+      // Controller instance is global at this point
+      // use: var instance = new Controller(x, y, z, t);
+      console.log("PID library loaded");
+    });
+
      // Load previously stored settings
     if(this.storedSettings && this.storedSettings.gainValues){
       this.gainValues = this.storedSettings.gainValues;
@@ -63,7 +72,8 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
       this.gainValues = {
         Kp: 1,
         Ki: 1,
-        Kd: 1  
+        Kd: 1,
+        target: 1
       };
     }
   };
@@ -75,7 +85,7 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    */
   PIDController.hasMissingProperties = function() {
     // Define a logic you want to return true and open the properties window
-    return this._settingsSet;
+    return !this._settingsSet;
   };
 
   /**
@@ -85,7 +95,17 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * @param event is an object that contains action and data properties.
    */
   PIDController.onExecute = function(event) {
-
+    console.log("Execute: ", event);
+    if(event.action === 'Update'){
+      // event.data should contain the current value to be corrected
+      var correction = this._ctrl.update(event.data);
+      if(correction !== 0){
+        // Send my data to anyone listening
+        this.dispatchDataFeed({output: correction});
+        // Send data to logic maker for processing
+        this.processData({output: correction}); 
+      }
+    }
   };
 
   /**
@@ -119,8 +139,20 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    */
   PIDController.onSaveProperties = function(settings){
     console.log("Saving: ", settings);
-    this.settings = settings;
-    // TODO: Store settings
+    
+    this.gainValues.Kp = settings.Kp;
+    this.gainValues.Ki = settings.Ki;
+    this.gainValues.Kd = settings.Kd;
+    this.gainValues.target = settings.target;
+
+    // Create/replace a PID Controller instance
+    this._ctrl = new Controller({
+      k_p: this.gainValues.Kp,
+      k_i: this.gainValues.Ki,
+      k_d: this.gainValues.Kd
+    });
+
+    this._ctrl.setTarget(this.gainValues.target);
   };
 
   /**
@@ -136,9 +168,9 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     easy.clearCustomSettingsPanel();
 
     // Compile template using current list
-    this.myPropertiesWindow = $(this.propTemplate({values: this.gainValues}));
+    this.myPropertiesWindow = $(this.propTemplate(this.gainValues));
     // Display elements
-    easy.displayCustomSettings(this.myPropertiesWindow);
+    easy.displayCustomSettings(this.myPropertiesWindow, true);
   };
 
   /**

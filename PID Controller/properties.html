@@ -1,0 +1,43 @@
+<!-- Base parameters to define gain values -->
+<template id="block-custom-properties">
+  <p></p><p></p>
+  <div class="ui inverted form">
+    
+    <h4>Gain</h4>
+    <div class="ui inverted divider"></div>
+    <div class="inline mini field">
+      <label>Kp: </label>
+      <div data-source="Kp" data-value={{Kp}} class="ui inverted transparent icon input">
+        <input type="text" placeholder="0" value="{{Kp}}">
+        <i class="icon"></i>
+      </div>
+    </div>
+
+    <div class="inline mini field">
+      <label>Ki: </label>
+      <div data-source="Ki" data-value={{Ki}} class="ui inverted transparent icon input">
+        <input type="text" placeholder="0" value="{{Ki}}">
+        <i class="icon"></i>
+      </div>
+    </div>
+
+    <div class="inline mini field">
+      <label>Kd: </label>
+      <div data-source="Kd" data-value={{Kd}} class="ui inverted transparent icon input">
+        <input type="text" placeholder="0" value="{{Kd}}">
+        <i class="icon"></i>
+      </div>
+    </div>
+
+    <h4>Target Value</h4>
+    <div class="ui inverted divider"></div>
+    <div class="inline mini field">
+      <label>Target: </label>
+      <div data-source="target" data-value={{target}} class="ui inverted transparent icon input">
+        <input type="text" placeholder="0" value="{{target}}">
+        <i class="icon"></i>
+      </div>
+    </div>
+
+  </div>
+</template>
