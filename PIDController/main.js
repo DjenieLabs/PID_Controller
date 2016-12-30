@@ -95,11 +95,10 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * @param event is an object that contains action and data properties.
    */
   PIDController.onExecute = function(event) {
-    console.log("Execute: ", event);
     if(event.action === 'Update'){
       // event.data should contain the current value to be corrected
       var correction = this._ctrl.update(event.data);
-      if(correction !== 0){
+      if(correction != 0){
         // Send my data to anyone listening
         this.dispatchDataFeed({output: correction});
         // Send data to logic maker for processing
@@ -149,7 +148,8 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     this._ctrl = new Controller({
       k_p: this.gainValues.Kp,
       k_i: this.gainValues.Ki,
-      k_d: this.gainValues.Kd
+      k_d: this.gainValues.Kd,
+      dt: 1/25
     });
 
     this._ctrl.setTarget(this.gainValues.target);
