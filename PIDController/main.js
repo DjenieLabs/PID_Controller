@@ -57,10 +57,9 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
 
 
     // Load Dependencies
-    var libPath = this.basePath + 'libs/node-pid-controller/';
-    require([libPath+'lib/index.js'], function(){
-      // Controller instance is global at this point
-      // use: var instance = new Controller(x, y, z, t);
+    var libPath = this.basePath + 'libs/pid-controller/';
+    require([libPath+'index.js'], function(controller){
+      that.__Controller = controller;
       console.log("PID library loaded");
     });
 
@@ -95,14 +94,16 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
    * @param event is an object that contains action and data properties.
    */
   PIDController.onExecute = function(event) {
-    if(event.action === 'Update'){
-      // event.data should contain the current value to be corrected
-      var correction = this._ctrl.update(event.data);
-      if(correction != 0){
-        // Send my data to anyone listening
-        this.dispatchDataFeed({output: correction});
-        // Send data to logic maker for processing
-        this.processData({output: correction}); 
+    if(this._ctrl){
+      if(event.action === 'Update'){
+        // event.data should contain the current value to be corrected
+        var correction = this._ctrl.update(event.data);
+        if(correction != 0){
+          // Send my data to anyone listening
+          this.dispatchDataFeed({output: correction});
+          // Send data to logic maker for processing
+          this.processData({output: correction}); 
+        }
       }
     }
   };
@@ -145,11 +146,11 @@ define(['HubLink', 'RIB', 'PropertiesPanel', 'Easy'], function(Hub, RIB, Ppanel,
     this.gainValues.target = settings.target;
 
     // Create/replace a PID Controller instance
-    this._ctrl = new Controller({
+    this._ctrl = new this.__Controller({
       k_p: this.gainValues.Kp,
       k_i: this.gainValues.Ki,
-      k_d: this.gainValues.Kd,
-      dt: 1/25
+      k_d: this.gainValues.Kd/*,
+      dt: 1/25*/
     });
 
     this._ctrl.setTarget(this.gainValues.target);
